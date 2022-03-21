@@ -93,19 +93,24 @@
 #' ## Code
 
 #+ Preliminaries, echo=FALSE
-options(width=120)
-pdf.options(pointsize=8)
-library(knitr)
-knit_hooks$set(smallMar = function(before, options, envir) {
-			if (before) par(mar=c(3,3,1,1), bty="n", mgp=c(2,.5,0)) 
-		})
-opts_chunk$set(dev=c('my_png','pdf'), fig.ext=c('png','pdf'), fig.width=3, fig.height=3, smallMar=TRUE)
-my_png <-  function(file, width, height, pointsize=12, ...) {
-	png(file, width = 1.5*width, height = 1.5*height, units="in", res=72*1.5, pointsize=pointsize, ...)
-}
+# options(width=120)
+# pdf.options(pointsize=8)
+# library(knitr)
+# knit_hooks$set(smallMar = function(before, options, envir) {
+# 			if (before) par(mar=c(3,3,1,1), bty="n", mgp=c(2,.5,0)) 
+# 		})
+# opts_chunk$set(dev=c('my_png','pdf'), fig.ext=c('png','pdf'), fig.width=3, fig.height=3, smallMar=TRUE)
+# my_png <-  function(file, width, height, pointsize=12, ...) {
+# 	png(file, width = 1.5*width, height = 1.5*height, units="in", res=72*1.5, pointsize=pointsize, ...)
+# }
 #opts_knit$set(root.dir = file.path(getwd(),".."))
 
 #' ### Libraries
+# install CoxHD and mg14 packages
+# library(devtools)
+# install_github("mg14/mg14")
+# install_github("mg14/CoxHD/CoxHD")
+
 #' Load a few libraries - see end of document for a full list of libraries and their versions.
 library(CoxHD)
 library(mg14)
@@ -115,39 +120,40 @@ set1 <- brewer.pal(9, "Set1")
 #' #### Clinical data
 #' We use the following steps for processing of the original data. Note that, for privacy reasons, we cannot distribute clinical data with the actual event dates and instead provide
 #' these data in an anonymised form.  
+# Hence one should skip the following two chunks (code line 124-156), and start from line 160: load("../data/AMLSG_Clinical_Anon.RData")
 #+ clinicalData, cache=TRUE
-clinicalData <- read.table("../data/AMLSG_Clinical.txt", sep="\t", header=TRUE, na.strings = "na", comment.char = "", quote="\"")
-clinicalData <- clinicalData[order(clinicalData$PDID),]
-clinicalData$ERDate <- as.Date(as.character(clinicalData$ERDate), "%d-%b-%y")
-clinicalData$CR_date <- as.Date(as.character(clinicalData$CR_date), "%d-%b-%y")
-clinicalData$TPL_date <- as.Date(as.character(clinicalData$TPL_date), "%d-%b-%y")
-clinicalData$Date_LF <- as.Date(as.character(clinicalData$Date_LF), "%d-%b-%y")
-clinicalData$Recurrence_date <- as.Date(as.character(clinicalData$Recurrence_date), "%d-%b-%y")
-levels(clinicalData$Study) <- c(`_07-04`="AMLSG0704" ,   `98A`="AMLHD98A" ,  `98B`="AMLHD98B")[levels(clinicalData$Study)]
-clinicalData$Study <- factor(as.character(clinicalData$Study))
-clinicalData$VPA[is.na(clinicalData$VPA)] <- 0
-clinicalData$ATRA_arm[is.na(clinicalData$ATRA_arm)] <- 0
-colnames(clinicalData) <- gsub('\\.',"",colnames(clinicalData))
-clinicalData <- clinicalData[!is.na(clinicalData$TypeAML),] ## remove unknown patients
-clinicalData$PDID <- factor(as.character(clinicalData$PDID))
-t <- read.table("../data/AMLSG_Karyotypes.txt", header=T, sep="\t", na.strings = "na",comment.char = "", quote="\"")
-karyotypes <- t$karyotype[match(clinicalData$PDID,t$PDID)]
-rm(t)
-clinicalData$t_9_11 <- grepl("t\\(9;11\\)\\(p22;q23\\)", karyotypes) + 0 # t(9;11)
-clinicalData$t_v_11 <- clinicalData$t_MLL &! clinicalData$t_9_11
-clinicalData$t_MLL <- NULL
+# clinicalData <- read.table("../data/AMLSG_Clinical.txt", sep="\t", header=TRUE, na.strings = "na", comment.char = "", quote="\"")
+# clinicalData <- clinicalData[order(clinicalData$PDID),]
+# clinicalData$ERDate <- as.Date(as.character(clinicalData$ERDate), "%d-%b-%y")
+# clinicalData$CR_date <- as.Date(as.character(clinicalData$CR_date), "%d-%b-%y")
+# clinicalData$TPL_date <- as.Date(as.character(clinicalData$TPL_date), "%d-%b-%y")
+# clinicalData$Date_LF <- as.Date(as.character(clinicalData$Date_LF), "%d-%b-%y")
+# clinicalData$Recurrence_date <- as.Date(as.character(clinicalData$Recurrence_date), "%d-%b-%y")
+# levels(clinicalData$Study) <- c(`_07-04`="AMLSG0704" ,   `98A`="AMLHD98A" ,  `98B`="AMLHD98B")[levels(clinicalData$Study)]
+# clinicalData$Study <- factor(as.character(clinicalData$Study))
+# clinicalData$VPA[is.na(clinicalData$VPA)] <- 0
+# clinicalData$ATRA_arm[is.na(clinicalData$ATRA_arm)] <- 0
+# colnames(clinicalData) <- gsub('\\.',"",colnames(clinicalData))
+# clinicalData <- clinicalData[!is.na(clinicalData$TypeAML),] ## remove unknown patients
+# clinicalData$PDID <- factor(as.character(clinicalData$PDID))
+# t <- read.table("../data/AMLSG_Karyotypes.txt", header=T, sep="\t", na.strings = "na",comment.char = "", quote="\"")
+# karyotypes <- t$karyotype[match(clinicalData$PDID,t$PDID)]
+# rm(t)
+# clinicalData$t_9_11 <- grepl("t\\(9;11\\)\\(p22;q23\\)", karyotypes) + 0 # t(9;11)
+# clinicalData$t_v_11 <- clinicalData$t_MLL &! clinicalData$t_9_11
+# clinicalData$t_MLL <- NULL
 
-dim(clinicalData)
+# dim(clinicalData)
 
 #' Here we store the data in an anonymised form, where all references to the actual date of diagnoses are removed. These data are available on github.
 #+ anonymous, eval=FALSE
-e <- clinicalData$ERDate
-clinicalData$ERDate <- clinicalData$ERDate - e
-clinicalData$CR_date <- clinicalData$CR_date - e
-clinicalData$Date_LF <- clinicalData$Date_LF - e
-clinicalData$TPL_date <- clinicalData$TPL_date - e
-clinicalData$Recurrence_date <- clinicalData$Recurrence_date - e
-save(clinicalData, file="../data/AMLSG_Clinical_Anon.RData")
+# e <- clinicalData$ERDate
+# clinicalData$ERDate <- clinicalData$ERDate - e
+# clinicalData$CR_date <- clinicalData$CR_date - e
+# clinicalData$Date_LF <- clinicalData$Date_LF - e
+# clinicalData$TPL_date <- clinicalData$TPL_date - e
+# clinicalData$Recurrence_date <- clinicalData$Recurrence_date - e
+# save(clinicalData, file="../data/AMLSG_Clinical_Anon.RData")
 
 #' Load the data using
 #+ load, eval=FALSE
@@ -164,7 +170,7 @@ all(rownames(mutationTable)==clinicalData$PDID)
 #' ### Survival data
 #+ survival, cache=TRUE
 os <- Surv(clinicalData$OS, clinicalData$Status) #OS
-t <- clinicalData$Time_Diag_TPL
+t <- clinicalData$Time_Diag_TPL # In this script, variables Time_Diag_TPL and TPL_date both denote time (days) from diagnosis to allograft
 t[is.na(t) | !clinicalData$TPL_Phase %in% "CR1" | !clinicalData$TPL_type %in% c("ALLO","FREMD") ] <- Inf ## Only allografts in CR1
 o <- clinicalData$OS
 tplIndexOs <-  t < o
@@ -204,8 +210,13 @@ dataList$Genetics$IDH2_p140 <-  table(mutationData$SAMPLE_NAME[mutationData$GENE
 dataList$Genetics$IDH2 <- NULL
 dataList$Genetics$NPM1 <- clinicalData$NPM1
 dataList$Cytogenetics$MLL_PTD <- NULL
-dataList$Genetics = dataList$Genetics + 0
+# dataList$Genetics = dataList$Genetics + 0
+# [Correction] Change the command to:
+dataList$Genetics[,52:58]<- as.data.frame(lapply(dataList$Genetics[,52:58], as.numeric))
 dataList$GeneGene <- MakeInteractions(data.frame(dataList$Genetics), data.frame(dataList$Genetics))[,as.vector(upper.tri(matrix(0,ncol=ncol(dataList$Genetics), nrow=ncol(dataList$Genetics))))]
+# Without modification (code line 213-215), an error occurred on executing line 216 as two new factor variables are unexpectedly created in dataList$Genetics by line 213
+# Error in FUN(X[[i]], ...) : non-numeric argument to binary operator
+# In addition: There were 50 or more warnings (use warnings() to see the first 50)
 dataList$GeneGene <- dataList$GeneGene[,colSums(dataList$GeneGene, na.rm=TRUE)>0] 
 dataList$GeneGene$`NPM1:FLT3_ITD:DNMT3A` <- (rowSums(dataList$Genetics[c('NPM1',"FLT3_ITD","DNMT3A")])==3)+0 ## Add NPM1:FLT3_ITD:DNMT3A product term as well
 dataList$CytoCyto <- MakeInteractions(dataList$Cytogenetics, dataList$Cytogenetics)[,sapply(1:ncol(dataList$Cytogenetics), `<`, 1:ncol(dataList$Cytogenetics))]
@@ -358,7 +369,7 @@ legend("topleft", col=set1[c(9,c(2,4,1))], lty=1, c("wt","clonal","indetermined"
 plot.new(); par(xpd=NA)
 legend("topleft", c(".","*","**","***", "P (0.05, 0.1]", "P (0.01, 0.05]", "P (0.001, 0.01]", "P < 0.001"), ncol=2, cex=1.5, bty="n", text.width= 0.1)
 
-
+par(mfrow=c(1,1)) # to escape the 8x8 plotting matrix
 
 
 #' 
@@ -607,11 +618,13 @@ mainIdx <- groups %in% mainGroups
 osIdx <- !grepl("TPL", colnames(dataFrame)) ## Exclude TPL from OS analyses..
 whichRFXOs <- which((colSums(dataFrame)>=8 | mainIdx) & osIdx) # ie, > 0.5%
 mainIdxOs <- mainIdx & osIdx
-osTDIdx <- !grepl("TPL_efs", colnames(dataFrame))
+osTDIdx <- !grepl("TPL_efs", colnames(dataFrame)) ## There is no variable in dataFrame containing "TPL_efs". This has a bearing on the subsequent code lines which call the variable osTDIdx that is defined with "TPL_efs"
 whichRFXOsTD <- which((colSums(dataFrame)>=8 | mainIdx) & osTDIdx) # ie, > 0.5%
 mainIdxOsTD <- mainIdx & osTDIdx
 whichRFXOsGG <- which((colSums(dataFrame)>=8 | mainIdxOs) & osIdx & groups %in% c(mainGroups,"GeneGene")) # ie, > 0.5%
-
+# This chunk creates column indices to subset DataFrame, including mainIdx, mainIdxOs, mainIdxOsTD, osIdx, osTDIdx, whichRFXOs, whichRFXOsTD, and whichRFXOsGG
+# However, on the one hand, these subsets seem not clearly indicated by the indices names; on the other, the Boolean combinations could have been simplified, for instance, the last code line combines mainIdxOs, osIdx, and mainGroups, while mainIdxOs itself has already contained information of OsIdx and mainGroups
+					 
 #' Compute the number of oncogenics, excluding complex karyotype.
 NONC <- rowSums(cbind(dataList$Cytogenetics[names(dataList$Cytogenetics)!="complex"], dataList$Genetics), na.rm=TRUE)
 
@@ -633,13 +646,15 @@ trainIdxOsTD <- trainIdx[tplSplitOs]
 par(mfrow=c(3,3))
 clinicalSpline <- as.data.frame(sapply(dataFrame[groups %in% c("Clinical","Demographics")], function(x){
 					if(all(x[1:5] %in% 0:10)) return(x)
-					y <- log(x+min(x)+1e-3)
+					y <- log(x+min(x)+1e-3) # We suspect this should be log(x-min(x)+1e-3) to make the value in the parentheses>0
 					fit <- coxph(os ~ pspline(y, df=3), subset=trainIdx)
 					predict(fit, newdata=data.frame(y=y))
 				}))
 for(n in names(clinicalSpline)) if(!all(dataFrame[1:5,n] %in% 0:10))
 		plot(dataFrame[,n], clinicalSpline[,n], log='x', xlab=paste(n, '[observed]'), ylab = paste(n, '[spline]'))
-
+	
+par(mfrow=c(1,1)) # to escape the 3x3 plotting matrix
+					 
 #' Training set - accuracy
 summary(coxph(os ~ ., data=clinicalSpline, subset=trainIdx))$concordance
 summary(coxph(os ~ ., data=dataFrame[groups %in% c("Clinical","Demographics")]), subset=trainIdx)$concordance
@@ -659,7 +674,7 @@ coxRFXFitOsTDMain <- CoxRFX(dataFrameOsTD[,mainIdxOsTD], osTD, groups[mainIdxOsT
 #' Now including gene:gene interaction terms (min. recurrence = 8)
  
 #+ coxRFXFitOsTDGG, cache=TRUE
-whichRFXOsTDGG <- which((colSums(dataFrame)>=8 | mainIdxOsTD) & osTDIdx & groups %in% c(mainGroups,"GeneGene")) # ie, > 0.5%
+whichRFXOsTDGG <- which((colSums(dataFrame)>=8 | mainIdxOsTD) & osTDIdx & groups %in% c(mainGroups,"GeneGene")) # ie, > 0.5% # Another command calling the incorrectly created variable osTDIdx
 coxRFXFitOsTDGGc <- CoxRFX(dataFrameOsTD[,whichRFXOsTDGG], osTD, groups[whichRFXOsTDGG], which.mu=mainGroups) ## allow only the main groups to have mean different from zero.. 
 
 #' Compute Harrel's concordance index
@@ -986,12 +1001,13 @@ text(locations[,1], locations[,2]+1,labels=paste(gsub(";","\n",genotype[patients
 #' 
 #' ### Competing risk adjustment
 #' In cases of competing events (CR and NCD; NCD and CIR), we use a competing risk adjustment between two event times $T$, $U$, to obtain 
-#' $$S(T=t \mid  Z, T < U) = \int_t^v \int_v^\infty f(T=t'\mid  Z) f(U=u' \mid  Z) dt' du' = \int_0^t f(T=t' \mid  Z) S(U=t'\mid Z) dv.$$
+#' $$S(T=t \mid  Z, T < U) = \int_t^v \int_v^\infty f(T=t'\mid  Z) f(U=u' \mid  Z) dt' du' = \int_0^t f(T=t' \mid  Z) S(U=t'\mid Z) dv.$$ # [Correction] = 1- \int_0^t f(T=t' \mid  Z) S(U=t'\mid Z) dv.$$
 #' 
 #' In practical terms, $S(t\mid Z) = S_0(t) ^{\exp(u Z)}$ denotes the survivor function estimated by the Kaplan-Meyer estimate $S_0(t)$, exponentiated by the hazard $\exp(u Z)$. The differential $f(t\mid Z)$ is
 #' obtained by evaluating the difference of $S(t+1\mid Z) - S(t\mid Z)$ at intervals of length 1 day, pseudo code
 #' 
-#' `S_t_cr <- cumsum(diff(S_t) * S_u)`
+#' `S_t_cr <- cumsum(diff(S_t) * S_u)` # Error: diff() returns negative values and Ndiff=n-1, hence we add 1 to diff(S_t)
+		  # [Correction] S_t_cr <- cumsum(c(1, diff(S_t)) * S_u)
 #' 
 #' 
 #' ### Encoding of events
@@ -1212,11 +1228,11 @@ text(x=par("usr")[2], y= y[w,-7]+diff(y[w,])/2, labels=c("early death","death in
 #+ alloIdx
 alloIdx <- clinicalData$TPL_type %in% c("ALLO","FREMD") # only allografts
 alloTimeCR1 <- clinicalData$Time_1CR_TPL + .5 # +.5 to make > 0
-alloTimeCR1[!alloIdx | (clinicalData$TPL_date < clinicalData$Recurrence_date & !clinicalData$TPL_Phase %in% c("CR1","RD"))] <- NA
+alloTimeCR1[!alloIdx | (clinicalData$TPL_date < clinicalData$Recurrence_date & !clinicalData$TPL_Phase %in% c("CR1","RD"))] <- NA # Error: There is no "RD" but "RD1" in clinicalData$TPL_Phase, we did not change this for comparison purposes
 
 #' Create data frames for each phase
 #+ postCR1Data, cache=TRUE
-whichRFXRel <- whichRFXOsTDGG[grep("TPL",names(whichRFXOsTDGG), invert=TRUE)] #mainIdx & !grepl("TPL", names(dataFrame)) & groups!="Nuisance"
+whichRFXRel <- whichRFXOsTDGG[grep("TPL",names(whichRFXOsTDGG), invert=TRUE)] #mainIdx & !grepl("TPL", names(dataFrame)) & groups!="Nuisance" # whichRFXRel denotes the same as whichRFXOsGG, which has been created earlier; the comment is incorrect, as Nuisance variables were in fact included in whichRFXRel
 t <- clinicalData$Recurrence_date
 t[is.na(t)] <- as.Date(1e6, origin="2000-01-01")
 relData <- MakeTimeDependent(dataFrame[whichRFXRel], timeEvent=alloTimeCR1, timeStop=as.numeric(pmin(t, clinicalData$Date_LF) - clinicalData$CR_date), status=!is.na(clinicalData$Recurrence_date)+0)
@@ -1228,7 +1244,7 @@ nrdData$transplantCR1 <- nrdData$event
 nrdData$event <- NULL
 nrdData$transplantRel <- 0
 alloTimeRel <- clinicalData$TPL_date - clinicalData$Recurrence_date + .5 # +.5 to make > 0
-alloTimeRel[!alloIdx | (clinicalData$TPL_date < clinicalData$Recurrence_date & !clinicalData$TPL_Phase %in% c("CR1","RD"))] <- NA
+alloTimeRel[!alloIdx | (clinicalData$TPL_date < clinicalData$Recurrence_date & !clinicalData$TPL_Phase %in% c("CR1","RD"))] <- NA # Error: There is no "RD" but "RD1" in clinicalData$TPL_Phase, we did not change this for comparison purposes
 i <- !is.na(clinicalData$Recurrence_date)
 prdData <- MakeTimeDependent(dataFrame[i,whichRFXRel], timeEvent=alloTimeRel[i], timeStop=as.numeric(clinicalData$Date_LF- clinicalData$Recurrence_date)[i], status=clinicalData$Status[i])
 prdData$transplantCR1 <- rep(0,nrow(prdData))
@@ -1238,7 +1254,15 @@ prdData$transplantRel <- prdData$event
 prdData$event <- NULL
 w <- which(prdData$time1 == prdData$time2) ## 5 cases with LF=Rec
 prdData$time2[w] <- prdData$time2[w] + .5
+
 prdData$time0 <- as.numeric(clinicalData$Recurrence_date-clinicalData$CR_date)[prdData$index]
+# Error: This command creates many NAs incorrectly
+# prdData$time0 : time from CR1 to relapse
+# prdData$index was created by function CoxHD::MakeTimeDepedent() for prdData, and could not locate entries correctly in clinicalData
+# length(prdData$index)=832 | nrow(clinicalData)=1540
+# [Correction] 
+# prdData$time0 <- as.numeric(clinicalData$Recurrence_date[i]-clinicalData$CR_date[i])[prdData$index]
+# we did not change this for comparison purposes
 
 #' ### RFX fit of transitions
 #+ postCR1Fits, cache=TRUE
@@ -1478,6 +1502,14 @@ MultiRFX5 <- function(coxRFXNcdTD, coxRFXCrTD, coxRFXNrdTD, coxRFXRelTD, coxRFXP
 xmax <- 2000
 xx <- 0:ceiling(xmax)
 coxphPrs <- coxph(Surv(time1, time2, status)~ pspline(time0, df=10), data=data.frame(prdData, time0=as.numeric(clinicalData$Recurrence_date-clinicalData$CR_date)[prdData$index])) 
+# Error: This command creates many NAs incorrectly
+# prdData$time0 : time from CR1 to relapse
+# prdData$index was created by function CoxHD::MakeTimeDepedent() for prdData, and could not locate entries correctly in clinicalData
+# length(prdData$index)=832 | nrow(clinicalData)=1540
+# [Correction] 
+# coxphPrs <- coxph(Surv(time1, time2, status)~ pspline(time0, df=10), data=data.frame(prdData, time0=as.numeric(clinicalData$Recurrence_date[i]-clinicalData$CR_date[i])[prdData$index])) 
+# we did not change this for comparison purposes
+
 tdPrmBaseline <- exp(predict(coxphPrs, newdata=data.frame(time0=xx[-1]))) ## Hazard (function of CR length)	
 
 coxphOs <- coxph(Surv(time1,time2, status)~ pspline(time0, df=10), data=data.frame(osData, time0=pmin(500,cr[osData$index,1]))) 
@@ -1529,6 +1561,8 @@ for(i in 1:5)
 
 
 #' #### Leave-one-out cross-validation
+#' Codes in sections 3.6.5.1-3.6.5.9 (code line 1556-1832) rely on an LSF environment for parallel computing purposes. We were not able to tailor the entire R script to our own environments, as the
+#' computations are very intensive, and hence the modifications are prone to errors.
 #' The following code is run on the cluster
 read_chunk('../code/leaveOneOut.R', labels="leaveOneOut")
 #+ leaveOneOut, eval=FALSE
@@ -1727,6 +1761,13 @@ for(pd in patients){
 	whichTrain <<- which(cvIdx != i)
 	xx <- 0:2000
 	coxphPrs <- coxph(Surv(time1, time2, status)~ pspline(time0, df=10), data=data.frame(prdData, time0=as.numeric(clinicalData$Recurrence_date-clinicalData$CR_date)[prdData$index])[prdData$index %in% whichTrain,]) 
+	# Error: This command creates many NAs incorrectly
+	# prdData$time0 : time from CR1 to relapse
+	# prdData$index was created by function CoxHD::MakeTimeDepedent() for prdData, and could not locate entries correctly in clinicalData
+	# length(prdData$index)=832 | nrow(clinicalData)=1540
+	# [Correction] 
+	# coxphPrs <- coxph(Surv(time1, time2, status)~ pspline(time0, df=10), data=data.frame(prdData, time0=as.numeric(clinicalData$Recurrence_date[i]-clinicalData$CR_date[i])[prdData$index])[prdData$index %in% whichTrain,]) 
+	# we did not change this for comparison purposes
 	tdPrmBaseline <- exp(predict(coxphPrs, newdata=data.frame(time0=xx[-1])))						
 	
 	coxphOs <- coxph(Surv(time1, time2, status)~ pspline(time0, df=10), data=data.frame(osData, time0=pmin(500,cr[osData$index,1]))[osData$index %in% whichTrain,]) 
@@ -1841,7 +1882,7 @@ MultiRFX3 <- function(coxRFXNrdTD, coxRFXRelTD, coxRFXPrdTD, data, x =365, ciTyp
 	}
 	kmRel <- getS(coxRFX = coxRFXRelTD, data = data, max.x=max(x))
 	kmNrd <- getS(coxRFX = coxRFXNrdTD, data = data, max.x=max(x))
-	kmPrd <- getS(coxRFX = coxRFXPrdTD, data = data, max.x=max(x))
+	kmPrd <- getS(coxRFX = coxRFXPrdTD, data = data, max.x=max(x)) # KmRel, kmNrd, kmPrd were previously represented by kmCir, kmNrm , and kmPrs
 	
 	## Step 2: Adjust CIR and NRM curve for competing risks, accounting for hazard
 	kmRel$Sadj <- sapply(1:nrow(data), function(i) cumsum(c(1,diff(kmRel$S^exp(kmRel$r[i,1]))) * kmNrd$S ^ exp(kmNrd$r[i,1])))
@@ -1860,7 +1901,7 @@ MultiRFX3 <- function(coxRFXNrdTD, coxRFXRelTD, coxRFXPrdTD, data, x =365, ciTyp
 	y <- mapply(function(i,j) kmRel$Sadj[i,j], w,1:length(w) ) # select time for each sample
 	cir <- y
 	cirLo <- y^exp( 2*sqrt(kmRel$r[,2]))
-	cirUp <- y^exp( - 2*sqrt(kmRel$r[,2]))
+	cirUp <- y^exp( - 2*sqrt(kmRel$r[,2])) # CIR seems to be short for Cumulative Incidence of Relapse; here it is in fact 1-Cumulative Incidence of Relapse
 	
 	## Step 3: Compute post-relapse survival
 	survPredict <- function(surv){
@@ -2087,8 +2128,8 @@ concordanceCIRcvTrial <- mclapply(list(crGroups[crGroups %in% mainGroups], crGro
 					}, mc.cores=3)
 		}, mc.cores=2)
 
-dotplot(sapply(concordanceCIRcvTrial[[1]], `[[` , "C")[4:6,])
-dotplot(sapply(concordanceCIRcvTrial[[2]], `[[` , "C")[4:6,])
+dotplot(sapply(concordanceCIRcvTrial[[1]], `[[` , "C")[4:6,]) # Error in FUN(X[[i]], ...) : subscript out of bounds
+dotplot(sapply(concordanceCIRcvTrial[[2]], `[[` , "C")[4:6,]) # Error in FUN(X[[i]], ...) : subscript out of bounds
 
 #' ##### Test for TPL:Age interactions
 #+tplAge
@@ -2111,7 +2152,10 @@ anova(c)
 EvalAbsolutePred <- function(prediction, surv, time, bins=seq(0,1,0.05)){
 	c <- cut(prediction, bins)
 	f <- survfit(surv ~ c)
-	e <- summary(f, time)
+        # e <- summary(f, time)
+	e <- summary(f, time, extend=T)
+	# an error occured on executing line 2151, see below
+	# line 2137 was modified as suggested
 	x <- sapply(strsplit(gsub("[a-z\\=\\(]|]","",e$strata),","), function(x) mean(as.numeric(x))); 
 	#w <- 1/(e$std.err+.Machine$double.eps)^2
 	w <- e$n[e$strata]
@@ -2123,6 +2167,7 @@ EvalAbsolutePred <- function(prediction, surv, time, bins=seq(0,1,0.05)){
 #'Absolute prediction error
 #+ absError
 absPredError <- EvalAbsolutePred(multiRFX3$os, Surv(allData$time1, allData$time2, allData$status), time=3*365)
+# Error in findrow(fit[i], times, extend) : no points selected for one or more curves, consider using the extend argument
 
 plot(absPredError$x, absPredError$survfit$surv, xlim=c(0,1), ylim=c(0,1), xlab="Predicted probability", ylab="Observed", main="Prediction tool")
 segments(absPredError$x, absPredError$survfit$lower,absPredError$x, absPredError$survfit$upper)
@@ -2372,6 +2417,9 @@ barplot(matrix(diff(quantile(relData$time2[m], na.rm=T, seq(0,1,0.1))), ncol=1)/
 #' Create a data.frame with all possibilities for allografts - none, CR1, after relapse.
 #+survivalTpl, cache=TRUE
 w <- sort(unique(osData$index[which(quantileRiskOsCR==3 & clinicalData$M_Risk[osData$index]=="Favorable")]))
+allDataTpl <- osData[rep(1:nrow(dataFrame), each=3),]
+allDataTpl$transplantCR1 <- rep(c(0,1,0), nrow(dataFrame))
+allDataTpl$transplantRel <- rep(c(0,0,1), nrow(dataFrame))																		    
 multiRFX3Tpl <- MultiRFX3(coxRFXNrdTD, coxRFXRelTD, coxRFXPrdTD, data=allDataTpl, x=3*365, prdData=prdData)
 multiRFX3Tpl <- as.data.frame(matrix(multiRFX3Tpl$os, ncol=3, byrow=TRUE, dimnames=list(NULL, c("None","CR1","Relapse"))), row.names=rownames(dataFrame))
 survivalTpl <- data.frame(multiRFX3Tpl, os=osYr, age=clinicalData$AOD, ELN=clinicalData$M_Risk, tercile=quantileRiskOsCR[1:nrow(multiRFX3Tpl)])
@@ -2555,13 +2603,26 @@ lines(lowess(predict(coxRFXOsCR, newdata=osData[1:1540,]), multiRFX3Tpl$CR1 - mu
 #' ##### Three state model
 #' We compute LOO out-of-sample predictions for the survival gain by allograft in CR1 v relapse by training 1540 models on 1539 patients each. 
 #+ multiRFX3TplCiLoo, cache=TRUE
+#+ # Codes in the following sections are subject to an LSF environment for parallel computing purposes. We tailor the codes in order to proceed (as shown below). 
+#+ However, since the computations are very intensive, our modifications are liable to errors
+# multiRFX3TplCiLoo <- sapply(mclapply(rownames(dataFrame), function(pd){
+# 			e <- new.env()
+# 			i <- which(rownames(dataFrame)==pd)
+# 			whichTrain <<- which(rownames(dataFrame)!=pd)
+# 			load(paste0("../code/loo/",i,".RData"), env=e)			
+# 			multiRFX3TplCi <- MultiRFX3TplCi(e$rfxNrs, e$rfxRel, e$rfxPrs, data=data[i,colnames(e$rfxPrs$Z), drop=FALSE], x=3*365, nSim=200, prdData=prdData[prdData$index!=i,], mc.cores=1)
+# 		}, mc.cores=10), I, simplify="array")[,,,1,]
+# [Modification] 
 multiRFX3TplCiLoo <- sapply(mclapply(rownames(dataFrame), function(pd){
-			e <- new.env()
-			i <- which(rownames(dataFrame)==pd)
-			whichTrain <<- which(rownames(dataFrame)!=pd)
-			load(paste0("../code/loo/",i,".RData"), env=e)			
-			multiRFX3TplCi <- MultiRFX3TplCi(e$rfxNrs, e$rfxRel, e$rfxPrs, data=data[i,colnames(e$rfxPrs$Z), drop=FALSE], x=3*365, nSim=200, prdData=prdData[prdData$index!=i,], mc.cores=1)
-		}, mc.cores=10), I, simplify="array")[,,,1,]
+i <- which(rownames(dataFrame)==pd)
+whichTrain <<- which(rownames(dataFrame)!=pd)
+rfxNrs <- CoxRFX(nrdData[nrdData$index %in% whichTrain, names(crGroups)], Surv(nrdData$time1, nrdData$time2, nrdData$status)[nrdData$index %in% whichTrain], groups=crGroups, which.mu = intersect(mainGroups, unique(crGroups)))
+rfxNrs$coefficients["transplantRel"] <- 0
+rfxPrs <- CoxRFX(prdData[prdData$index %in% whichTrain, names(crGroups)], Surv(prdData$time1, prdData$time2, prdData$status)[prdData$index %in% whichTrain], groups=crGroups, nu=1, which.mu = intersect(mainGroups, unique(crGroups)))
+rfxRel <- CoxRFX(relData[relData$index %in% whichTrain, names(crGroups)], Surv(relData$time1, relData$time2, relData$status)[relData$index %in% whichTrain], groups=crGroups, which.mu = intersect(mainGroups, unique(crGroups)))
+rfxRel$coefficients["transplantRel"] <- 0
+multiRFX3TplCi <- MultiRFX3TplCi(rfxNrs, rfxRel, rfxPrs, data=data[i,colnames(rfxPrs$Z), drop=FALSE], x=3*365, nSim=200, prdData=prdData[prdData$index!=i,], mc.cores=1)
+}, mc.cores=10), I, simplify="array")[,,,1,]
 
 
 #' This we compare to in-sample predictions of the model trained on all 1540 patients.
@@ -2640,15 +2701,27 @@ mean(apply(multiRFX3TplLoo[!is.na(clinicalData$CR_date) & clinicalData$AOD < 60,
 #' #### Three patients with numerical CI's and LOO
 #+ threePatientsAlloLooCi, cache=TRUE
 patients <- c("PD11104a","PD8314a","PD10941a")
+# We modify this function the same way (with the same commands altered as did in section 3.6.6.4.1) in order to proceed
+# threePatientTplCiLoo <- sapply(patients, function(pd){
+# 			e <- new.env()
+# 			i <- which(rownames(dataFrame)==pd)
+# 			whichTrain <<- which(rownames(dataFrame)!=pd)
+# 			load(paste0("../code/loo/",i,".RData"), env=e)			
+# 			multiRFX3TplCi <- MultiRFX3TplCi(e$rfxNrs, e$rfxRel, e$rfxPrs, data=data[i,colnames(e$rfxPrs$Z), drop=FALSE], x=3*365, nSim=1000, prdData=prdData[prdData$index!=i,], mc.cores=5)
+# 		}, simplify="array")
 threePatientTplCiLoo <- sapply(patients, function(pd){
-			e <- new.env()
-			i <- which(rownames(dataFrame)==pd)
-			whichTrain <<- which(rownames(dataFrame)!=pd)
-			load(paste0("../code/loo/",i,".RData"), env=e)			
-			multiRFX3TplCi <- MultiRFX3TplCi(e$rfxNrs, e$rfxRel, e$rfxPrs, data=data[i,colnames(e$rfxPrs$Z), drop=FALSE], x=3*365, nSim=1000, prdData=prdData[prdData$index!=i,], mc.cores=5)
-		}, simplify="array")
+  i <- which(rownames(dataFrame)==pd)
+  whichTrain <<- which(rownames(dataFrame)!=pd)
+  rfxNrs <- CoxRFX(nrdData[nrdData$index %in% whichTrain, names(crGroups)], Surv(nrdData$time1, nrdData$time2, nrdData$status)[nrdData$index %in% whichTrain], groups=crGroups, which.mu = intersect(mainGroups, unique(crGroups)))
+  rfxNrs$coefficients["transplantRel"] <- 0
+  rfxPrs <- CoxRFX(prdData[prdData$index %in% whichTrain, names(crGroups)], Surv(prdData$time1, prdData$time2, prdData$status)[prdData$index %in% whichTrain], groups=crGroups, nu=1, which.mu = intersect(mainGroups, unique(crGroups)))
+  rfxRel <- CoxRFX(relData[relData$index %in% whichTrain, names(crGroups)], Surv(relData$time1, relData$time2, relData$status)[relData$index %in% whichTrain], groups=crGroups, which.mu = intersect(mainGroups, unique(crGroups)))
+  rfxRel$coefficients["transplantRel"] <- 0
+  multiRFX3TplCi <- MultiRFX3TplCi(rfxNrs, rfxRel, rfxPrs, data=data[i,colnames(rfxPrs$Z), drop=FALSE], x=3*365, nSim=1000, prdData=prdData[prdData$index!=i,], mc.cores=5)
+}, simplify="array")
 
 #' #### LOO predictions of HSCT with CI's accounting for correlation
+#' Section 3.6.6.7 (code line 2708-2717) calculates the confidence interval for predictions, which was originally run in parallel on an LSF platform. We decided to skip this section as the computations are very intensive, and thus the modifications are prone to errors
 #' The following code is run on the cluster
 nSim <- 200
 read_chunk('../code/ciCor.R', labels="ciCor")
@@ -2680,9 +2753,11 @@ segments(1-threePatientTplCiLoo["none","lower","os",1,patients], y[patients],1-t
 segments(x[patients], threePatientTplCiLoo["dCr1Rel","lower","os",1,patients],x[patients], threePatientTplCiLoo["dCr1Rel","upper","os",1,patients])
 # Add loess fit, accounting for correlations of errors
 xn <- seq(0.01,0.99,0.01)
+nSim <- 200						
 fit <- sapply(1:nSim, function(i){
-			benefit <- multiRFX3TplCiCorLoo[2,"os",i,]-multiRFX3TplCiCorLoo[3,"os",i,]
-			absrisk <- multiRFX3TplCiCorLoo[1,"os",i,]
+			#benefit <- multiRFX3TplCiCorLoo[2,"os",i,]-multiRFX3TplCiCorLoo[3,"os",i,]
+			#absrisk <- multiRFX3TplCiCorLoo[1,"os",i,]
+	                # Here we do not have CI (multiRFX3TplCiCorLoo) as the computations (section 3.6.6.7, code line 2708-2717) were skipped as we noted earlier.
 			s <- clinicalData$AOD < 60 & !is.na(clinicalData$CR_date) &! clinicalData$TPL_Phase %in% c("RD1","PR1")
 			x <- 1-absrisk
 			y <- benefit
@@ -2786,6 +2861,7 @@ names(fAlloCR1Pers) <- names(j)
 fAlloCR1Pers
 
 #' #### Supplementary Figure S4
+#' # Here we cannot reproduce these figures (2850-2876) as the computations for CI (section 3.6.6.7, code line 2708-2717) were skipped as we noted earlier.	       
 #' As there is some uncertainty related to the overall benefit of early vs late allografts, the following plots show the benefit at the extremes of the
 #' expected distribution. Plots are shown for the 5%, 50% and 95% quantiles.
 #+ survNalloCi
@@ -2928,6 +3004,9 @@ axis(side=3)
 
 
 #' #### Genetic imputation multi stage
+#' As we noted, codes in sections 3.6.7.2-3.6.7.3 (code line 2989-3023) are also relying on an LSF environment for parallel computations. 
+#' We were not able to tailor the entire R script to our own environments, as the computations are very intensive, 
+#' and hence the modifications are prone to errors.
 read_chunk('../code/imputation.R', labels="imputationMultiRfx")
 #+ imputationMultiRfx, eval=FALSE
 
@@ -3248,6 +3327,9 @@ legend(par("usr")[1],1.5, fill=set1[c(3,2,4,1,5,7)][1:ncol(allModelsCvRfxC)], le
 #' administered after diagnosis.
 
 #' The subsequent code is executed on our LSF cluster for 100 replicates
+#' As we noted, codes in sections 4.4.1.3 (code line 3312-3363) are also relying on an LSF environment for parallel computations. 
+#' We were not able to tailor the entire R script to our own environments, as the computations are very intensive, 
+#' and hence the modifications are prone to errors.
 read_chunk('../code/cv100.R', labels="allModelsCVTDCode")
 #+ allModelsCVTDCode, eval=FALSE
 
@@ -3372,6 +3454,10 @@ allModelsTrialTD <- mclapply(levels(clinicalData$Study), function(foo){
 							RFX=coxRFXOsTrain,
 							RFXgg=coxRFXOsGGc							))
 		}, mc.cores=3)
+# The above mclapply() returns warning message and causes errors in the following steps (code line 3440-3483)
+# Warning message:
+# In mclapply(names(allModelsTrialTD), function(foo) { :
+#    all scheduled cores encountered errors in user code						
 names(allModelsTrialTD) <- levels(clinicalData$Study)
 
 allModelsTrialTdPredictions <- mclapply(names(allModelsTrialTD), function(foo){
@@ -3467,6 +3553,7 @@ coxAICOsTD <- step(coxBICOsTD, scope=scopeStep, k = 2, trace=0)
 
 #' #### TCGA data
 #' Load data
+#' Data TCGA_Clinical.txt was not provided, and hence we could not rerun sections 4.4.3 and 4.4.4 (code line 3537-3843)		    
 #+ tcgaData, cache=TRUE
 tcgaClinical <- read.table("../data/TCGA_Clinical.txt", sep="\t", header=TRUE)
 tcgaGenetic <- read.table("../data/TCGA_Genetic.txt", sep="\t", header=TRUE)
@@ -4044,6 +4131,10 @@ save(coxRFXFitOsTDGGc, whichRFXOsTDGG, simDataFrame, simGroups, os, mainGroups, 
 
 #' ##### Simulation code
 #' The following code is run on the farm
+#' As we noted, codes in sections 5.4.2.0.4 (line 4118), 5.4.2.0.5 (line 4123-4125), 5.4.2.1.1 (line 4131-4143), 5.4.2.2.1 (line 4181-4191), and 5.4.2.3.1 (4196-4226)
+#' are also relying on an LSF environment for parallel computations. 
+#' We were not able to tailor the entire R script to our own environments, as the computations are very intensive, 
+#' and hence the modifications are prone to errors.											      
 #+ farmulations, cache=FALSE
 read_chunk('../code/Farmulations2.R', labels="farmulationsCode")
 #+ farmulationsCode, eval=FALSE
@@ -4272,7 +4363,7 @@ SimSurv5 <- function(coxRFXNcdTD, coxRFXCrTD, coxRFXNrdTD, coxRFXRelTD, coxRFXPr
 #' First prepare the data. Allograft indices:
 alloIdx <- clinicalData$TPL_type %in% c("ALLO","FREMD") # only allografts
 alloTimeRel <- clinicalData$TPL_date - clinicalData$Recurrence_date + .5 # +.5 to make > 0
-alloTimeRel[!alloIdx | (clinicalData$TPL_date < clinicalData$Recurrence_date & !clinicalData$TPL_Phase %in% c("CR1","RD"))] <- NA
+alloTimeRel[!alloIdx | (clinicalData$TPL_date < clinicalData$Recurrence_date & !clinicalData$TPL_Phase %in% c("CR1","RD"))] <- NA # Error: There is no "RD" but "RD1" in clinicalData$TPL_Phase, we did not change this for comparison purposes
 
 #' Spline fitted transition probabilities.
 coxphPrs <- coxph(Surv(time1, time2, status)~ pspline(time0, df=10), data=data.frame(prdData, time0=as.numeric(clinicalData$Recurrence_date-clinicalData$CR_date)[prdData$index])) 
@@ -4409,6 +4500,8 @@ names(fAlloCR1Pers) <- names(j)
 fAlloCR1Pers
 
 #' # Web tool
+#' # We were not able to rerun section 6 on our environments, as it performs clustering computations, 
+#' and thus the modifications are prone to errors	       
 #' We have implemented the aformentioned multistage prediciton model as a shiny webserver.
 #' 
 #' ## Code
